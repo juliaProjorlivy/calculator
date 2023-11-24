@@ -1,0 +1,3 @@
+[submodule "Verror"]
+	path = Verror
+	url = git@github.com:juliaProjorlivy/Verror.git
