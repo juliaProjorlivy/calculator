@@ -165,32 +165,92 @@ double *find_value_of_variable(char *var, struct variables *vars)
     return NULL;
 }
 
-double *do_function(struct tree_node *node, struct variables *vars, double *result)
+// double do_function(struct tree_node *node, struct variables *vars, double *result)
+// {
+//     if(!node)
+//     {
+//         return 0;
+//     }
+//     // double left = 0;
+//     // double right = 0;
+//     double l_val = do_function(node->left, vars, result);
+//     // if(l_val)
+//     // {
+//     //     left = *l_val;
+//     // }
+//     double r_val = do_function(node->right, vars, result);
+//     // if(r_val)
+//     // {
+//     //     right = *r_val;
+//     // }
+//     switch(node->type)
+//     {
+//         case OP:
+//         {
+//             if(do_operation(node->op, &l_val, &r_val, result))
+//             {
+//                 VERROR("unexpected operation");
+//                 return 0;
+//             }
+//             break;
+//         }
+//         case DIGIT:
+//         {
+//             *result = node->digit;
+//             break;
+//         }
+//         case VAR:
+//         {
+//             *result = *find_value_of_variable(node->var, vars);
+//             if(!result) 
+//             {
+//                 VERROR("Troubles finding variable");
+//                 return 0;
+//             }
+//             break;
+//         }
+//         case NOTHING:
+//         {
+//             VERROR("type NOTHING should not be in the tree");
+//             return 0;
+//         }
+//         default:
+//         {
+//             VERROR("unexpected type in function");
+//             return 0;
+//         }
+    
+//     }
+//     return *result;
+
+// }
+
+int do_function(struct tree_node *node, struct variables *vars, double *result)
 {
     if(!node)
     {
         return 0;
     }
-    double left = 0;
-    double right = 0;
-    double *l_val = do_function(node->left, vars, result);
-    if(l_val)
+
+    if(do_function(node->left, vars, result))
     {
-        left = *l_val;
+        return 1;
     }
-    double *r_val = do_function(node->right, vars, result);
-    if(r_val)
+    double l_val = *result;
+    if(do_function(node->right, vars, result))
     {
-        right = *r_val;
+        return 1;
     }
+    double r_val = *result;
+    
     switch(node->type)
     {
         case OP:
         {
-            if(do_operation(node->op, &left, &right, result))
+            if(do_operation(node->op, &l_val, &r_val, result))
             {
                 VERROR("unexpected operation");
-                return NULL;
+                return 1;
             }
             break;
         }
@@ -205,23 +265,23 @@ double *do_function(struct tree_node *node, struct variables *vars, double *resu
             if(!result) 
             {
                 VERROR("Troubles finding variable");
-                return NULL;
+                return 1;
             }
             break;
         }
         case NOTHING:
         {
             VERROR("type NOTHING should not be in the tree");
-            return NULL;
+            return 1;
         }
         default:
         {
             VERROR("unexpected type in function");
-            return NULL;
+            return 1;
         }
     
     }
-    return result;
+    return 0;
 
 }
 
