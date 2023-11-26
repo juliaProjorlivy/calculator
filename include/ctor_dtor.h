@@ -3,8 +3,8 @@
 
 #include "tree.h"
 
-int Node(void *val, type_t type);
+struct tree_node *Node(void *val, type_t type);
 
-void Del_tree(tree_node *node);
+void Del_tree(struct tree_node *node);
 
 #endif

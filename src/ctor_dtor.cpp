@@ -2,23 +2,23 @@
 #include "verror.h"
 #include <stdlib.h>
 
-int Node(void *val, type_t type)
+struct tree_node *Node(void *val, type_t type)
 {
-  tree_node *node = (tree_node *)calloc(sizeof(tree_node), 1)
+  struct tree_node *node = (struct tree_node *)calloc(sizeof(tree_node), 1);
   if(!node)
   {
     VERROR_MEM;
-    return 1;
+    return NULL;
   }
 
   node->type = type;
   node->left = NULL;
   node->right = NULL;
 
-  if(type == NOTHING)
+  if(type == NOTHING) // maybe switch
   {
-    node->op = NULL;
-    return 0;
+    node->digit = 0;
+    return node;
   }
 
   else if(type == DIGIT)
@@ -27,17 +27,17 @@ int Node(void *val, type_t type)
   }
   else if(type == VAR)
   {
-    node->var = val;
+    node->var = strndup((char *)val, strlen((char *)val));
   }
   else 
   {
-    node->symb = strndub((char *)val, strlen((char *)val))  
+    node->op = *(op_t *)val;
   }
 
-  return 0;
+  return node;
 }
 
-void Del_tree(tree_node *node)
+void Del_tree(struct tree_node *node)
 {
   if(!node)
   {
@@ -52,9 +52,9 @@ void Del_tree(tree_node *node)
     Del_tree(node->right);
   }
   
-  if(node->type == OP)
+  if(node->type == VAR)
   {
-    free(node->symb);
+    free(node->var);
   }
   free(node);
 }

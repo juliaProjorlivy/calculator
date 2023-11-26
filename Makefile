@@ -21,7 +21,7 @@ all: $(OBJ)
 	@$(CXX) $(CXX_FLAGS) -lasan $(OBJ) -o $(EXECUTABLE)
 	
 graph:
-	dot -Tpng -O tree_graph/graph.dot
+	dot -Tpng -O graph/graph.dot
 build/%.o: src/%.cpp
 	mkdir -p ./build
 	@$(CXX) $(CXX_FLAGS) -c -o $@ $<

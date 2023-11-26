@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "dump.h"
 #include "tree.h"
 #include "verror.h"
@@ -14,11 +15,15 @@ void print_in_node(struct tree_node *node, char **line)
     print_in_node(node->left, line);
     if(node->type == OP)
     {
-      sprintf(*line, "%s%n", node->symb, &word_len);
+        sprintf(*line, "%s%n", op_names[node->op], &word_len);
     }
-    else (node->type == DIGIT)
+    else if(node->type == DIGIT)
     {
-      sprintf(*line, "%lf%n", node->digit, &word_len);
+        sprintf(*line, "%lf%n", node->digit, &word_len);
+    }
+    else 
+    {
+        sprintf(*line, "%s%n", node->var, &word_len);
     }
     (*line) += word_len;
     print_in_node(node->right, line);
@@ -26,7 +31,7 @@ void print_in_node(struct tree_node *node, char **line)
     (*line) += word_len;
 }
 
-void node_dump(struct tree_node *node, FILE *file) // TODO: pass file as argument
+void node_dump(struct tree_node *node, FILE *file)
 {
     if(!node)
     {
@@ -34,28 +39,54 @@ void node_dump(struct tree_node *node, FILE *file) // TODO: pass file as argumen
     }
     fprintf(file, "    node[color=\"blue\", frontsize=14, shape=\"rectangle\", style=\"rounded, filled\", fillcolor=\"lightblue\"];\n");
     fprintf(file, "    edge[color=\"deepskyblue\",fontsize=12];\n");
-    fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightgreen\"];\n", node, node->value);
+    switch(node->type)
+    {
+        case OP:
+        {
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightblue\"];\n", node, op_names[node->op]);
+            break;
+        }
+        case DIGIT:
+        {
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%lf\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightgreen\"];\n", node, node->digit);
+            break;
+        }
+        case VAR:
+        {
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightpink\"];\n", node, node->var);
+            break;
+        }
+        case NOTHING:
+        {
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
     if(node->left)
     {
-        fprintf(file, "\tnode_%p:<f0>->node_%p[label=\"yes\"];\n", node, node->left);
+        fprintf(file, "\tnode_%p:<f0>->node_%p;\n", node, node->left);
         node_dump(node->left, file);
     }
     else
     {
-        fprintf(file, "\tL_NULL_%p[label=\"NULL\", color=\"red\"];\n", node);
+        fprintf(file, "\tL_NULL_%p[label=\"NULL\", color=\"red\", style=\"filled\", fillcolor=\"tomato\"];\n", node);
         fprintf(file, "\tnode_%p:<f0>->L_NULL_%p;\n", node, node);
     }
     if(node->right)
     {
-        fprintf(file, "\tnode_%p:<f1>->node_%p[label=\"no\"];\n", node, node->right);
+        fprintf(file, "\tnode_%p:<f1>->node_%p;\n", node, node->right);
         node_dump(node->right, file);
     }
     else
     {
-        fprintf(file, "\tR_NULL_%p[label=\"NULL\", color=\"red\"];\n", node);
+        fprintf(file, "\tR_NULL_%p[label=\"NULL\", color=\"red\", style=\"filled\", fillcolor=\"tomato\"];\n", node);
         fprintf(file, "\tnode_%p:<f1>->R_NULL_%p;\n", node, node);
     }
-    
+
     return;
 }
 
