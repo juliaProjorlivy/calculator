@@ -46,14 +46,19 @@ int main()
     print_in_node(root, &new_line);
     tree_dump(root, dot_filename);
 
-    char var2[5] = "x";
-    char var1[5] = "time";
-    struct variables *vars = Variables(4, var1, var2);
+    struct variables *vars = Variables(2, "time");
     double result = 0;
     do_function(root, vars, &result);
     printf("res = %lf\n", result);
 
+    char var[] = "time";
+    struct tree_node *derivative = d(root, var);
+    do_function(derivative, vars, &result);
+    printf("derivative = %lf\n", result);
+    const char *dot_filename_2 = "graph/dgraph.dot";
+    tree_dump(derivative, dot_filename_2);
     Del_tree(root);
+    Del_tree(derivative);
     Del_Variables(vars);
     free(ptr_line);
     free(ptr_new_line);

@@ -3,7 +3,7 @@
 
 #include "tree.h"
 
-struct tree_node *Node(void *val, type_t type);
+struct tree_node *Node(struct node_val val, struct tree_node *left, struct tree_node *right);
 
 void Del_tree(struct tree_node *node);
 

@@ -27,16 +27,22 @@ typedef enum
     EXP = 9,
 } op_t;
 
-struct tree_node
+struct node_val
 {
+  type_t type;
   union
   {
-    double digit;
-    op_t op;
-    char *var;
+      double val;
+      op_t op;
+      char *var;
   };
+};
 
-  type_t type;
+
+struct tree_node
+{
+  struct node_val val;
+  
   struct tree_node *left;
   struct tree_node *right;
 };

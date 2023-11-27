@@ -20,15 +20,15 @@ struct tree_node *reader(char **line)
     if(**line == '(')
     {
         (*line)++;
-        struct tree_node *node = Node(NULL, NOTHING);
-        node->left = reader(line);
+        struct node_val value = {.type = NOTHING, .val = 0};
+        struct tree_node *node = Node(value, reader(line), NULL);
 
         int word_len = 0;
         double val = 0;
         if(sscanf(*line, "%lf%n", &val, &word_len) > 0)
         {
-            node->digit = val;
-            node->type = DIGIT;
+            node->val.val = val;
+            node->val.type = DIGIT;
             (*line) += word_len; 
         }
         else
@@ -48,15 +48,15 @@ struct tree_node *reader(char **line)
             op_t operation = is_op(op_name, word_len);
             if(operation != NONE)
             {
-                node->op = operation;
-                node->type = OP;
+                node->val.op = operation;
+                node->val.type = OP;
                 (*line) += word_len;
                 *(bracket_ptr + word_len) = '(';
             }
             else
             {
-                node->var = strndup(op_name, word_len);
-                node->type = VAR;
+                node->val.var = strndup(op_name, word_len);
+                node->val.type = VAR;
                 (*line) += word_len;
                 *(bracket_ptr + word_len) = ')';
             }

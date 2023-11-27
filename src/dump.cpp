@@ -13,17 +13,17 @@ void print_in_node(struct tree_node *node, char **line)
     sprintf(*line, "(%n", &word_len);
     (*line) += word_len;
     print_in_node(node->left, line);
-    if(node->type == OP)
+    if(node->val.type == OP)
     {
-        sprintf(*line, "%s%n", op_names[node->op], &word_len);
+        sprintf(*line, "%s%n", op_names[node->val.op], &word_len);
     }
-    else if(node->type == DIGIT)
+    else if(node->val.type == DIGIT)
     {
-        sprintf(*line, "%lf%n", node->digit, &word_len);
+        sprintf(*line, "%lf%n", node->val.val, &word_len);
     }
     else 
     {
-        sprintf(*line, "%s%n", node->var, &word_len);
+        sprintf(*line, "%s%n", node->val.var, &word_len);
     }
     (*line) += word_len;
     print_in_node(node->right, line);
@@ -39,21 +39,21 @@ void node_dump(struct tree_node *node, FILE *file)
     }
     fprintf(file, "    node[color=\"blue\", frontsize=14, shape=\"rectangle\", style=\"rounded, filled\", fillcolor=\"lightblue\"];\n");
     fprintf(file, "    edge[color=\"deepskyblue\",fontsize=12];\n");
-    switch(node->type)
+    switch(node->val.type)
     {
         case OP:
         {
-            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightblue\"];\n", node, op_names[node->op]);
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightblue\"];\n", node, op_names[node->val.op]);
             break;
         }
         case DIGIT:
         {
-            fprintf(file, "\tnode_%p[shape=record, label=\"{%lf\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightgreen\"];\n", node, node->digit);
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%lf\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightgreen\"];\n", node, node->val.val);
             break;
         }
         case VAR:
         {
-            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightpink\"];\n", node, node->var);
+            fprintf(file, "\tnode_%p[shape=record, label=\"{%s\\n |  {<f0> left | <f1> right}}\", color=\"blue\", style=\"filled\", fillcolor=\"lightpink\"];\n", node, node->val.var);
             break;
         }
         case NOTHING:

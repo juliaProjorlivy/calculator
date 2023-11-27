@@ -2,7 +2,7 @@
 #include "verror.h"
 #include <stdlib.h>
 
-struct tree_node *Node(void *val, type_t type)
+struct tree_node *Node(struct node_val val, struct tree_node *left, struct tree_node *right)
 {
   struct tree_node *node = (struct tree_node *)calloc(sizeof(tree_node), 1);
   if(!node)
@@ -11,27 +11,13 @@ struct tree_node *Node(void *val, type_t type)
     return NULL;
   }
 
-  node->type = type;
-  node->left = NULL;
-  node->right = NULL;
+  node->left = left;
+  node->right = right;
 
-  if(type == NOTHING) // maybe switch
+  node->val = val;
+  if(val.type == VAR)
   {
-    node->digit = 0;
-    return node;
-  }
-
-  else if(type == DIGIT)
-  {
-    node->digit = *(double *)val;
-  }
-  else if(type == VAR)
-  {
-    node->var = strndup((char *)val, strlen((char *)val));
-  }
-  else 
-  {
-    node->op = *(op_t *)val;
+    (node->val).var = strndup(val.var, strlen(val.var));
   }
 
   return node;
@@ -52,9 +38,9 @@ void Del_tree(struct tree_node *node)
     Del_tree(node->right);
   }
   
-  if(node->type == VAR)
+  if(node->val.type == VAR)
   {
-    free(node->var);
+    free(node->val.var);
   }
   free(node);
 }

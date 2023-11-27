@@ -11,6 +11,10 @@ double *find_value_of_variable(char *var, struct variables *vars);
 
 int do_function(struct tree_node *node, struct variables *vars, double *result);
 
+struct tree_node *d(struct tree_node *node, char *var);
+
+struct tree_node *c(struct tree_node *node);
+
 struct variable
 {
     char *name;
