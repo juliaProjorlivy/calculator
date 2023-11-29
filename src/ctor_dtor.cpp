@@ -1,3 +1,4 @@
+#include "tree.h"
 #include "ctor_dtor.h"
 #include "verror.h"
 #include <stdlib.h>

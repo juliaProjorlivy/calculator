@@ -1,7 +1,10 @@
+#include "tree.h"
+#include "variables.h"
 #include "ctor_dtor.h"
 #include "dump.h"
 #include "reader.h"
-#include "func.h"
+#include "derivative.h"
+#include "calculate_function.h"
 #include "verror.h"
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -40,20 +43,26 @@ int main()
 
     char *ptr_line = line;
     char *new_line = (char *)calloc(sizeof(char), 2 * data_size);
-    char *ptr_new_line= new_line;
+    char *ptr_new_line = new_line;
 
     struct tree_node *root = reader(&line);
-    print_in_node(root, &new_line);
+    print_in_node(root, &new_line, &ptr_new_line);
+    printf("new_line = %s\n", ptr_new_line);
     tree_dump(root, dot_filename);
 
-    struct variables *vars = Variables(2, "time");
+    struct variables *vars = Variables(2, "x", 3.14);
     double result = 0;
     do_function(root, vars, &result);
     printf("res = %lf\n", result);
 
-    char var[] = "time";
+    char var[] = "x";
     struct tree_node *derivative = d(root, var);
+    derivative = simplify(derivative);
     do_function(derivative, vars, &result);
+    char *der_line = (char *)calloc(sizeof(char), 500);
+    char *ptr_der_line = der_line;
+    print_in_node(derivative, &der_line, &ptr_der_line);
+    printf("der_line = %s\n", ptr_der_line);
     printf("derivative = %lf\n", result);
     const char *dot_filename_2 = "graph/dgraph.dot";
     tree_dump(derivative, dot_filename_2);
@@ -62,7 +71,7 @@ int main()
     Del_Variables(vars);
     free(ptr_line);
     free(ptr_new_line);
-
+    free(ptr_der_line);
 
     return 0;
 }

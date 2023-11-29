@@ -11,7 +11,7 @@ CXX_FLAGS = -I include -I lib/Verror/include -D _DEBUG -ggdb3 -std=c++17 -O0 -Wa
  -flto-odr-type-merging -fno-omit-frame-pointer -Wlarger-than=8192 -Wstack-usage=8192 -pie -fPIE -Werror=vla 															\
  -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 
-SRCS = src/ctor_dtor.cpp src/main.cpp src/dump.cpp src/reader.cpp src/func.cpp 
+SRCS = src/ctor_dtor.cpp src/main.cpp src/dump.cpp src/reader.cpp src/derivative.cpp src/variables.cpp src/calculate_function.cpp 
 OBJ = $(patsubst %.cpp, build/%.o, $(subst src/, , $(SRCS))) lib/Verror/lib/libVerror.a
 EXECUTABLE = calculate
 VALGRIND = valgrind --leak-check=full --leak-resolution=med ./$(EXECUTABLE)

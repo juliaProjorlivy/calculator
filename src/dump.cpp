@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include "dump.h"
+#include "reader.h"
 #include "tree.h"
 #include "verror.h"
 
-void print_in_node(struct tree_node *node, char **line)
+void print_in_node(struct tree_node *node, char **line, char **const_line)
 {
     int word_len = 0;
     if(!node)
@@ -12,7 +13,7 @@ void print_in_node(struct tree_node *node, char **line)
     }
     sprintf(*line, "(%n", &word_len);
     (*line) += word_len;
-    print_in_node(node->left, line);
+    print_in_node(node->left, line, const_line);
     if(node->val.type == OP)
     {
         sprintf(*line, "%s%n", op_names[node->val.op], &word_len);
@@ -26,7 +27,7 @@ void print_in_node(struct tree_node *node, char **line)
         sprintf(*line, "%s%n", node->val.var, &word_len);
     }
     (*line) += word_len;
-    print_in_node(node->right, line);
+    print_in_node(node->right, line, const_line);
     sprintf(*line, ")%n", &word_len);
     (*line) += word_len;
 }
@@ -93,11 +94,25 @@ void node_dump(struct tree_node *node, FILE *file)
 int tree_dump(struct tree_node *node, const char *filename)
 {
     FILE *file = fopen(filename, "w");
+    if(!file)
+    {
+        VERROR_FOPEN(filename);
+        return 1;
+    }
 
-    fprintf(file, "digraph tree{\n");
-    fprintf(file, "\trankdir=TB;\n");
+    if(fprintf(file, "digraph tree{\n\trankdir=TB;\n") < 0)
+    {
+        VERROR_FWRITE(filename);
+        return 1;
+    }
+
     node_dump(node, file);
-    fprintf(file, "}\n");
+
+    if(fprintf(file, "}\n") < 0)
+    {
+        VERROR_FWRITE(filename);
+        return 1;
+    }
     if(fclose(file))
     {
         VERROR_FCLOSE(filename);

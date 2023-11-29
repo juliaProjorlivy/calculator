@@ -9,10 +9,6 @@ typedef enum
   NOTHING = 3,
 } type_t;
 
-static const int max_len = 10;
-
-static char op_names[][max_len] = {" ", "+", "-", "*", "/", "^", "sin", "cos", "ln", "exp"};
-static int n_op = sizeof(op_names)/(sizeof(char) * max_len);
 typedef enum
 {
     NONE = 0,
@@ -46,8 +42,6 @@ struct tree_node
   struct tree_node *left;
   struct tree_node *right;
 };
-
-
 
 #endif
 
