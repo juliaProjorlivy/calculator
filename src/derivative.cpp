@@ -114,10 +114,15 @@ struct tree_node *d(struct tree_node *node, char *var)
                 struct tree_node *ln_L = Node(val, NULL, c(node->left)); // логарифм левой части дерева
 
                 val.op = MUL;
-                struct tree_node *mul_r = Node(val, ln_L, c(node->right)); // произведение правой части узла на лог левой
+                struct tree_node *rl = Node(val, d(ln_L, var), c(node->right));
+                struct tree_node *rr = Node(val, ln_L, d(node->right, var));
+
+                val.op = ADD;
+                struct tree_node *r = Node(val, rl, rr);
 
                 val.op = MUL;
-                return Node(val, c(node), d(mul_r, var));
+                return Node(val, c(node), r);
+
             }
             case EXP:
             {
@@ -142,81 +147,9 @@ struct tree_node *d(struct tree_node *node, char *var)
 
 int is_un(op_t op)
 {
-    if(op == SIN || op ==COS || op == LN || op == EXP)
+    if(op == SIN || op == COS || op == LN || op == EXP)
     {
         return 1;
     }
     return 0;
 }
-
-int is_equal(double x, double y, double epsilon)
-{
-    return (fabs (x - y) < epsilon);
-}
-
-struct tree_node *simplify(struct tree_node *node)
-{
-    if(!node)
-    {
-        return NULL;
-    }
-    node->left = simplify(node->left);
-    node->right = simplify(node->right);
-
-    struct variables vars = {};
-    double new_val = 0;
-    struct node_val val = {.type = DIGIT, .val = new_val};
-
-    if(node->val.type == OP)
-    {
-        if(node->val.op == MUL)
-        {
-            if(node->left->val.type == DIGIT)
-            {
-                if(is_equal((node->left->val.val), 0))
-                {
-                    Del_tree(node);
-                    return Node(val, NULL, NULL);
-                }
-            }
-            if(node->right->val.type == DIGIT)
-            {
-                if(is_equal((node->right->val.val), 0))
-                {
-                    Del_tree(node);
-                    return Node(val, NULL, NULL);
-                }
-            }
-        }
-
-        if(is_un(node->val.op))
-        {
-            if(node->right->val.type == DIGIT && !node->left)
-            {
-                if(do_function(node, &vars, &new_val)) 
-                {
-                    VERROR("toubles counting the function");
-                    return NULL;
-                }
-                Del_tree(node);
-                val.val = new_val;
-                return Node(val, NULL, NULL);
-            }
-        }
-        else if(node->right->val.type == DIGIT && node->left->val.type == DIGIT)
-        {
-            if(do_function(node, &vars, &new_val))
-            {
-                VERROR("troubles counting the function");
-                return NULL;
-            }
-            Del_tree(node);
-            val.val = new_val;
-            return Node(val, NULL, NULL);
-        }
-    }
-
-    return node;
-}
-
-

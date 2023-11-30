@@ -5,6 +5,7 @@
 #include "reader.h"
 #include "derivative.h"
 #include "calculate_function.h"
+#include "simplifier.h"
 #include "verror.h"
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -65,6 +66,10 @@ int main()
     printf("der_line = %s\n", ptr_der_line);
     printf("derivative = %lf\n", result);
     const char *dot_filename_2 = "graph/dgraph.dot";
+
+    const char *latex = "graph/derivative.tex";
+    latex_dump_tree(derivative, latex);
+
     tree_dump(derivative, dot_filename_2);
     Del_tree(root);
     Del_tree(derivative);

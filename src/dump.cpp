@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "dump.h"
-#include "reader.h"
 #include "tree.h"
+#include "reader.h"
+#include "dump.h"
+#include "derivative.h"
 #include "verror.h"
 
 void print_in_node(struct tree_node *node, char **line, char **const_line)
@@ -121,6 +122,76 @@ int tree_dump(struct tree_node *node, const char *filename)
     return 0;
 }
 
+
+int latex_dump_node(struct tree_node *node, FILE *file)
+{
+    if(!node)
+    {
+        return 0;
+    }
+    if(node->val.type == OP)
+    {
+        if(node->val.op == DIV)
+        {
+            fprintf(file, "\\frac{");
+            latex_dump_node(node->left, file);
+            fprintf(file, "}{");
+            latex_dump_node(node->right, file);
+            fprintf(file, "}");
+        }
+        else if(is_un(node->val.op))
+        {
+            fprintf(file, "\\%s\\left(", op_names[node->val.op]);
+            latex_dump_node(node->right, file);
+            fprintf(file, "\\right)");
+        }
+        else if(strlen(op_names[node->val.op]) > 1)
+        {
+            latex_dump_node(node->left, file);
+            fprintf(file, "\\%s{", op_names[node->val.op]);
+            latex_dump_node(node->right, file);
+            fprintf(file, "}");
+        }
+        else
+        {
+            latex_dump_node(node->left, file);
+            fprintf(file, "%s{", op_names[node->val.op]);
+            latex_dump_node(node->right, file);
+            fprintf(file, "}");
+        }
+    }
+    else if(node->val.type == DIGIT)
+    {
+        fprintf(file, " %lf ", node->val.val);
+    }
+    else
+    {
+        fprintf(file, " %s ", node->val.var);
+    }
+    
+    return 0;
+}
+
+int latex_dump_tree(struct tree_node *node, const char *filename)
+{
+    FILE *file = fopen(filename, "w");
+    if(!file)
+    {
+        VERROR_FOPEN(filename);
+        return 1;
+    }
+    fprintf(file, "\\begin{document}\n$");
+    latex_dump_node(node, file);
+    fprintf(file, "$\n");
+    fprintf(file, "\\end{document}\n");
+    if(fclose(file))
+    {
+        VERROR_FCLOSE(filename);
+        return 1;
+    }
+
+    return 0;
+}
 
 
 
