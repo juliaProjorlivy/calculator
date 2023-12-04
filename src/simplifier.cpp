@@ -63,34 +63,56 @@ struct tree_node *simplify(struct tree_node *node)
 
         else if(node->val.op == ADD)
         {
-            if(node->left->val.type == DIGIT && node->left->val.var == 0)
+            if(node->left)
             {
-                struct tree_node *ret_node = node->right;
-                Del_tree(node->left);
-                free(node);
-                return ret_node;
+                if(node->left->val.type == DIGIT && node->left->val.var == 0)
+                {
+                    struct tree_node *ret_node = node->right;
+                    Del_tree(node->left);
+                    free(node);
+                    return ret_node;
+                }
             }
-            if(node->right->val.type == DIGIT && node->right->val.var == 0)
+            if(node->right)
             {
-                struct tree_node *ret_node = node->left;
-                Del_tree(node->right);
-                free(node);
-                return ret_node;
+                if(node->right->val.type == DIGIT && node->right->val.var == 0)
+                {
+                    struct tree_node *ret_node = node->left;
+                    Del_tree(node->right);
+                    free(node);
+                    return ret_node;
+                }
+            }
+        }
+        else if(node->val.op == SUB)
+        {
+            if(node->right)
+            {
+                if(node->right->val.type == DIGIT && node->right->val.var == 0)
+                {
+                    struct tree_node *ret_node = node->left;
+                    Del_tree(node->right);
+                    free(node);
+                    return ret_node;
+                }
             }
         }
 
         else if(is_un(node->val.op))
         {
-            if(node->right->val.type == DIGIT && !node->left)
+            if(node->right)
             {
-                if(do_function(node, &vars, &new_val)) 
+                if(node->right->val.type == DIGIT && !node->left)
                 {
-                    VERROR("toubles counting the function");
-                    return NULL;
+                    if(do_function(node, &vars, &new_val)) 
+                    {
+                        VERROR("toubles counting the function");
+                        return NULL;
+                    }
+                    Del_tree(node);
+                    val.val = new_val;
+                    return Node(val, NULL, NULL);
                 }
-                Del_tree(node);
-                val.val = new_val;
-                return Node(val, NULL, NULL);
             }
         }
         else if(node->right->val.type == DIGIT && node->left->val.type == DIGIT)

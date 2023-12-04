@@ -6,6 +6,5 @@ struct tree_node *reader(char **line);
 static const int max_len = 10;
 
 static char op_names[][max_len] = {" ", "+", "-", "*", "/", "^", "sin", "cos", "ln", "exp"};
-// static op_t un_op[] = {SIN, COS, LN};
 
 #endif

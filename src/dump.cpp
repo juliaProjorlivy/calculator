@@ -147,22 +147,28 @@ int latex_dump_node(struct tree_node *node, FILE *file)
         }
         else if(strlen(op_names[node->val.op]) > 1)
         {
+            fprintf(file, "{(");
             latex_dump_node(node->left, file);
-            fprintf(file, "\\%s{", op_names[node->val.op]);
+            fprintf(file, ")}");
+            fprintf(file, "\\%s", op_names[node->val.op]);
+            fprintf(file, "{(");
             latex_dump_node(node->right, file);
-            fprintf(file, "}");
+            fprintf(file, ")}");
         }
         else
         {
+            fprintf(file, "{(");
             latex_dump_node(node->left, file);
-            fprintf(file, "%s{", op_names[node->val.op]);
+            fprintf(file, ")}");
+            fprintf(file, "%s", op_names[node->val.op]);
+            fprintf(file, "{(");
             latex_dump_node(node->right, file);
-            fprintf(file, "}");
+            fprintf(file, ")}");
         }
     }
     else if(node->val.type == DIGIT)
     {
-        fprintf(file, " %lf ", node->val.val);
+        fprintf(file, " %.2lf ", node->val.val);
     }
     else
     {
@@ -193,5 +199,6 @@ int latex_dump_tree(struct tree_node *node, const char *filename)
     return 0;
 }
 
+// need to check whether function is too big and separate her
 
 

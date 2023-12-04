@@ -7,13 +7,30 @@
 #include "calculate_function.h"
 #include "simplifier.h"
 #include "verror.h"
+#include "taylor_func.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 
-int main()
+#include "parse.h"
+
+int main(int argc, char *argv[])
 {
+    // if(argc < 2)
+    // {
+    //     VERROR("not enough arguments are given");
+    //     return 1;
+    // }
+    // const char *data_filename = argv[1];
+
+    // #ifdef calculate_func
+    //     const char
+    //     #ifdef print_tree
+    //         const char *tree_file = argv[]
+    //     #endif
+    // #endif
     const char *data_filename = "data.txt";
     const char *dot_filename = "graph/graph.dot";
+    const char *taylor_filename = "taylor.tex";
 
     FILE *file = fopen(data_filename, "r+");
     struct stat buf;
@@ -51,7 +68,7 @@ int main()
     printf("new_line = %s\n", ptr_new_line);
     tree_dump(root, dot_filename);
 
-    struct variables *vars = Variables(2, "x", 3.14);
+    struct variables *vars = Variables(2, "x", 0.);
     double result = 0;
     do_function(root, vars, &result);
     printf("res = %lf\n", result);
@@ -70,6 +87,11 @@ int main()
     const char *latex = "graph/derivative.tex";
     latex_dump_tree(derivative, latex);
 
+    struct tree_node *taylor_node = Taylor_expansion(root, vars->var_arr, 3);
+    taylor_node = simplify(taylor_node);
+    latex_dump_tree(taylor_node, taylor_filename);
+    tree_dump(taylor_node, "graph/taylor.dot");
+
     tree_dump(derivative, dot_filename_2);
     Del_tree(root);
     Del_tree(derivative);
@@ -77,6 +99,11 @@ int main()
     free(ptr_line);
     free(ptr_new_line);
     free(ptr_der_line);
+    Del_tree(taylor_node);
+
+    // char linee[30] = {};
+    // scanf("%s", linee);
+    // printf("%lf\n", getG(linee));
 
     return 0;
 }
