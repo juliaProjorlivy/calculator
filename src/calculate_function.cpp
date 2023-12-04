@@ -58,6 +58,11 @@ int do_operation(op_t op, double *l_val, double *r_val, double *result)
             *result = exp((*r_val));
             return 0;
         }
+        case NONE:
+        {
+            VERROR("unexpected operation");
+            break;
+        }
         default:
             VERROR("unexpected operation");
             break;

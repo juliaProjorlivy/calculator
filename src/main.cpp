@@ -101,9 +101,11 @@ int main(int argc, char *argv[])
     free(ptr_der_line);
     Del_tree(taylor_node);
 
-    // char linee[30] = {};
-    // scanf("%s", linee);
-    // printf("%lf\n", getG(linee));
+    char linee[30] = {};
+    scanf("%s", linee);
+    struct tree_node *parse_node = getG(linee);
+    printf("%lf\n", parse_node->val.val);
+    Del_tree(parse_node);
 
     return 0;
 }

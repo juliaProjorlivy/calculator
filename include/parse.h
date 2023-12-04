@@ -1,14 +1,14 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-double getG(char *);
+struct tree_node *getG(char *);
 
-double getN();
+struct tree_node *getN();
 
-double getP();
+struct tree_node *getP();
 
-double getT();
+struct tree_node *getT();
 
-double getE();
+struct tree_node *getE();
 
 #endif
