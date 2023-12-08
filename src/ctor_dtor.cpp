@@ -18,7 +18,7 @@ struct tree_node *Node(struct node_val val, struct tree_node *left, struct tree_
   node->val = val;
   if(val.type == VAR)
   {
-    (node->val).var = strndup(val.var, strlen(val.var));
+    (node->val).var = strdup(val.var);
   }
 
   return node;

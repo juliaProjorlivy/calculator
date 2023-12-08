@@ -11,4 +11,8 @@ struct tree_node *getT();
 
 struct tree_node *getE();
 
+struct tree_node *getID();
+
+struct tree_node *getPow();
+
 #endif

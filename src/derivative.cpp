@@ -25,6 +25,8 @@ struct tree_node *d(struct tree_node *node, char *var)
         return NULL;
     }
 
+    // TODO: switch (node->val.type)
+
     if(node->val.type == DIGIT)
     {
         struct node_val val = {.type = DIGIT, .val = 0};
@@ -37,12 +39,14 @@ struct tree_node *d(struct tree_node *node, char *var)
             struct node_val val = {.type = DIGIT, .val = 1};
             return Node(val, NULL, NULL);
         }
-        struct node_val val = {.type = DIGIT, .val = 0}; // TODO: mathematics
+        struct node_val val = {.type = DIGIT, .val = 0};
         return Node(val, NULL, NULL);
     }
     else if(node->val.type == OP)
     {
         struct node_val val = {.type = OP};
+        
+        // TODO: function
         switch(node->val.op)
         {
             case ADD: [[fallthrough]] ;

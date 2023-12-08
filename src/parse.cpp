@@ -3,6 +3,7 @@
 #include "variables.h"
 #include "ctor_dtor.h"
 #include "parse.h"
+#include <string.h>
 
 char *s = NULL;
 int p = 0;
@@ -19,15 +20,17 @@ struct tree_node *getE()
         {
             case '+':
             {
-                val->val.val += val2->val.val;
-                Del_tree(val2);
+                val = Node({.type = OP, .op = ADD}, val, val2);
+                // val->val.val += val2->val.val;
+                // Del_tree(val2);
                 // val += val2;
                 break;
             }
             case '-':
             {
-                val->val.val -= val2->val.val;
-                Del_tree(val2);
+                val = Node({.type = OP, .op = SUB}, val, val2);
+                // val->val.val -= val2->val.val;
+                // Del_tree(val2);
                 // val -= val2;
                 break;
             }
@@ -39,28 +42,58 @@ struct tree_node *getE()
     return val;
 }
 
-struct tree_node *getT()
+// struct tree_node *getMinus()
+// {
+//     if(s[p] == '-')
+//     {
+//         if('0' <= s[p+1] && s[p+1] <= '9')
+//         {
+//             if(p > 0)
+//             {
+//                 if('0' > s[p-1] || s[p-1] > '9')
+//                 {
+//                     return
+//                 }
+//             }
+//         }
+//     }
+// }
+
+struct tree_node *getPow()
 {
     struct tree_node *val = getP();
+    while(s[p] == '^')
+    {
+        p++;
+        struct tree_node *val2 = getP();
+        val = Node({.type = OP, .op = POW}, val, val2);
+    }
+    return val;
+}
+
+struct tree_node *getT()
+{
+    struct tree_node *val = getPow();
     while(s[p] == '*' || s[p] == '/')
     {
         char op = s[p];
         p++;
-        struct tree_node *val2 = getP();
+        struct tree_node *val2 = getPow();
         switch (op)
         {
             case '*':
             {
-                // struct tree_node *res = Node({.type = OP, .op = MUL}, val, val2);
-                val->val.val = val->val.val * val2->val.val;
-                Del_tree(val2);
+                val = Node({.type = OP, .op = MUL}, val, val2);
+                // val->val.val = val->val.val * val2->val.val;
+                // Del_tree(val2);
                 // val *= val2;
                 break;
             }
             case '/':
             {
-                val->val.val = val->val.val / val2->val.val;
-                Del_tree(val2);
+                val = Node({.type = OP, .op = DIV}, val, val2);
+                // val->val.val = val->val.val / val2->val.val;
+                // Del_tree(val2);
                 // val /= val2;
                 break;
             }
@@ -86,26 +119,36 @@ struct tree_node *getP()
         p++;
         return val;
     }
+    else if('a' <= s[p] && s[p] <= 'z')
+    {
+        struct tree_node *val = getID();
+        return val;
+    }
     return getN();
 }
 
+const int max_len = 10;
+
 struct tree_node *getID()
 {
-    struct tree_node *val = Node({.type = VAR, .var = 0}, NULL, NULL);
+    struct tree_node *val = Node({.type = NOTHING, .val = 0 }, NULL, NULL);
     int old_p = p;
     int word_i = 0;
+    char tmp_var[max_len] = {};
 
-    while('a' <= s[p] && s[p] <= 'z')
+    while(('a' <= s[p] && s[p] <= 'z') || ('A' <= s[p] && s[p] <= 'Z'))
     {
-        val->val.var[word_i] = s[p];
+        tmp_var[word_i] = s[p];
         p++;
         word_i++;
     }
+    val->val.var = strndup(tmp_var, word_i);
     if(old_p == p)
     {
         printf("error\n");
         return NULL;
     }
+    val->val.type = VAR;
     return val;
 }
 
@@ -120,6 +163,11 @@ struct tree_node *getN()
     {
         if(s[p] == '.')
         {
+            if(dot)
+            {
+                printf("error");
+                return NULL;
+            }
             dot = 1;
             p++;
             continue;
@@ -156,11 +204,11 @@ struct tree_node *getG(char *str)
         printf("error\n");
         return NULL;
     }
-    if((char)(val->val.val) == '\0')
-    {
-        printf("error\n");
-        return NULL;
-    }
+    // if((char)(val->val.val) == '\0')
+    // {
+    //     printf("error\n");
+    //     return NULL;
+    // }
     return val;
 }
 

@@ -68,12 +68,12 @@ int main(int argc, char *argv[])
     printf("new_line = %s\n", ptr_new_line);
     tree_dump(root, dot_filename);
 
-    struct variables *vars = Variables(2, "x", 0.);
+    struct variables *vars = Variables(2, "time", 0.);
     double result = 0;
     do_function(root, vars, &result);
     printf("res = %lf\n", result);
 
-    char var[] = "x";
+    char var[] = "time";
     struct tree_node *derivative = d(root, var);
     derivative = simplify(derivative);
     do_function(derivative, vars, &result);
@@ -92,6 +92,23 @@ int main(int argc, char *argv[])
     latex_dump_tree(taylor_node, taylor_filename);
     tree_dump(taylor_node, "graph/taylor.dot");
 
+    char linee[30] = {};
+    scanf("%s", linee);
+    struct tree_node *parse_node = getG(linee);
+    double res_parse = 0;
+    if(do_function(parse_node, vars, &res_parse))
+    {
+        printf("do func bad\n");
+        return 1;
+    }
+    if(!parse_node)
+    {
+        printf("some troubles\n");
+        return 1;
+    }
+    printf("%lf\n", res_parse);
+    Del_tree(parse_node);
+
     tree_dump(derivative, dot_filename_2);
     Del_tree(root);
     Del_tree(derivative);
@@ -101,11 +118,6 @@ int main(int argc, char *argv[])
     free(ptr_der_line);
     Del_tree(taylor_node);
 
-    char linee[30] = {};
-    scanf("%s", linee);
-    struct tree_node *parse_node = getG(linee);
-    printf("%lf\n", parse_node->val.val);
-    Del_tree(parse_node);
 
     return 0;
 }

@@ -115,6 +115,7 @@ struct tree_node *simplify(struct tree_node *node)
                 }
             }
         }
+        
         else if(node->right->val.type == DIGIT && node->left->val.type == DIGIT)
         {
             if(do_function(node, &vars, &new_val))
