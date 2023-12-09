@@ -3,7 +3,22 @@
 #include "variables.h"
 #include "ctor_dtor.h"
 #include "parse.h"
+#include "reader.h"
 #include <string.h>
+
+static int n_op = sizeof(op_names)/(sizeof(char) * max_len);
+
+static op_t is_op(char *op_val, int word_len)
+{
+    for(int i = 1; i < n_op; i++)
+    {
+        if(!strncmp(op_names[i], op_val, (size_t)word_len))
+        {
+            return (op_t)i;
+        }
+    }
+    return NONE;
+}
 
 char *s = NULL;
 int p = 0;
@@ -42,22 +57,6 @@ struct tree_node *getE()
     return val;
 }
 
-// struct tree_node *getMinus()
-// {
-//     if(s[p] == '-')
-//     {
-//         if('0' <= s[p+1] && s[p+1] <= '9')
-//         {
-//             if(p > 0)
-//             {
-//                 if('0' > s[p-1] || s[p-1] > '9')
-//                 {
-//                     return
-//                 }
-//             }
-//         }
-//     }
-// }
 
 struct tree_node *getPow()
 {
@@ -122,12 +121,26 @@ struct tree_node *getP()
     else if('a' <= s[p] && s[p] <= 'z')
     {
         struct tree_node *val = getID();
+        if(s[p] == '(')
+        {
+            p++;
+            struct tree_node *val2 = getE();
+            if(s[p] != ')')
+            {
+                printf("error\n");
+                return NULL;
+            }
+            p++;
+            val->right = val2;
+            return val;
+        }
         return val;
     }
+    
+
     return getN();
 }
 
-const int max_len = 10;
 
 struct tree_node *getID()
 {
@@ -142,13 +155,24 @@ struct tree_node *getID()
         p++;
         word_i++;
     }
-    val->val.var = strndup(tmp_var, word_i);
+
     if(old_p == p)
     {
         printf("error\n");
         return NULL;
     }
-    val->val.type = VAR;
+    op_t operation = is_op(tmp_var, word_i);
+
+    if(operation == NONE)
+    {
+        val->val.var = strndup(tmp_var, word_i);
+        val->val.type = VAR;
+    }
+    else
+    {
+        val->val.op = operation;
+        val->val.type = OP;
+    }
     return val;
 }
 
@@ -159,8 +183,27 @@ struct tree_node *getN()
     int dot = 0;
     double mult = 1;
 
+    int minus = 1;
+    if(s[p] == '-')
+    {
+        if(p == 0)
+        {
+            p++;
+            minus = -1;
+        }
+        if(p > 0)
+        {
+            if((s[p-1] == '+' || s[p-1] == '-' || s[p-1] == '*' || s[p-1] == '/' || s[p-1] == '(') && '0' <= s[p+1] && s[p+1] <= '9')
+            {
+                p++;
+                minus = -1;
+            }
+        }
+    }
+
     while(('0' <= s[p] && s[p] <= '9') || s[p] == '.')
     {
+
         if(s[p] == '.')
         {
             if(dot)
@@ -187,6 +230,9 @@ struct tree_node *getN()
         }
         p++;
     }
+
+    val->val.val *= minus;
+
     if(old_p == p)
     {
         printf("error\n");
