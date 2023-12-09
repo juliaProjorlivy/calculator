@@ -20,33 +20,27 @@ static op_t is_op(char *op_val, int word_len)
     return NONE;
 }
 
-char *s = NULL;
-int p = 0;
+// char *s = NULL;
+// int p = 0;
 
-struct tree_node *getE()
+struct tree_node *getE(struct parse_line *line)
 {
-    struct tree_node *val = getT();
-    while(s[p] == '+' || s[p] == '-')
+    struct tree_node *val = getT(line);
+    while(line->str[line->p] == '+' || line->str[line->p] == '-')
     {
-        char op = s[p];
-        p++;
-        struct tree_node *val2 = getT();
+        char op = line->str[line->p];
+        (line->p)++;
+        struct tree_node *val2 = getT(line);
         switch (op)
         {
             case '+':
             {
                 val = Node({.type = OP, .op = ADD}, val, val2);
-                // val->val.val += val2->val.val;
-                // Del_tree(val2);
-                // val += val2;
                 break;
             }
             case '-':
             {
                 val = Node({.type = OP, .op = SUB}, val, val2);
-                // val->val.val -= val2->val.val;
-                // Del_tree(val2);
-                // val -= val2;
                 break;
             }
             default:
@@ -58,42 +52,36 @@ struct tree_node *getE()
 }
 
 
-struct tree_node *getPow()
+struct tree_node *getPow(struct parse_line *line)
 {
-    struct tree_node *val = getP();
-    while(s[p] == '^')
+    struct tree_node *val = getP(line);
+    while(line->str[line->p] == '^')
     {
-        p++;
-        struct tree_node *val2 = getP();
+        (line->p)++;
+        struct tree_node *val2 = getP(line);
         val = Node({.type = OP, .op = POW}, val, val2);
     }
     return val;
 }
 
-struct tree_node *getT()
+struct tree_node *getT(struct parse_line *line)
 {
-    struct tree_node *val = getPow();
-    while(s[p] == '*' || s[p] == '/')
+    struct tree_node *val = getPow(line);
+    while(line->str[line->p] == '*' || line->str[line->p] == '/')
     {
-        char op = s[p];
-        p++;
-        struct tree_node *val2 = getPow();
+        char op = line->str[line->p];
+        (line->p)++;
+        struct tree_node *val2 = getPow(line);
         switch (op)
         {
             case '*':
             {
                 val = Node({.type = OP, .op = MUL}, val, val2);
-                // val->val.val = val->val.val * val2->val.val;
-                // Del_tree(val2);
-                // val *= val2;
                 break;
             }
             case '/':
             {
                 val = Node({.type = OP, .op = DIV}, val, val2);
-                // val->val.val = val->val.val / val2->val.val;
-                // Del_tree(val2);
-                // val /= val2;
                 break;
             }
             default:
@@ -104,33 +92,33 @@ struct tree_node *getT()
     return val;
 }
 
-struct tree_node *getP()
+struct tree_node *getP(struct parse_line *line)
 {
-    if(s[p] == '(')
+    if(line->str[line->p] == '(')
     {
-        p++;
-        struct tree_node *val = getE();
-        if(s[p] != ')')
+        (line->p)++;
+        struct tree_node *val = getE(line);
+        if(line->str[line->p] != ')')
         {
             printf("error\n");
             return NULL;
         }
-        p++;
+        (line->p)++;
         return val;
     }
-    else if('a' <= s[p] && s[p] <= 'z')
+    else if('a' <= line->str[line->p] && line->str[line->p] <= 'z')
     {
-        struct tree_node *val = getID();
-        if(s[p] == '(')
+        struct tree_node *val = getID(line);
+        if(line->str[line->p] == '(')
         {
-            p++;
-            struct tree_node *val2 = getE();
-            if(s[p] != ')')
+            (line->p)++;
+            struct tree_node *val2 = getE(line);
+            if(line->str[line->p] != ')')
             {
                 printf("error\n");
                 return NULL;
             }
-            p++;
+            (line->p)++;
             val->right = val2;
             return val;
         }
@@ -138,25 +126,25 @@ struct tree_node *getP()
     }
     
 
-    return getN();
+    return getN(line);
 }
 
 
-struct tree_node *getID()
+struct tree_node *getID(struct parse_line *line)
 {
     struct tree_node *val = Node({.type = NOTHING, .val = 0 }, NULL, NULL);
-    int old_p = p;
+    int old_p = line->p;
     int word_i = 0;
     char tmp_var[max_len] = {};
 
-    while(('a' <= s[p] && s[p] <= 'z') || ('A' <= s[p] && s[p] <= 'Z'))
+    while(('a' <= line->str[line->p] && line->str[line->p] <= 'z') || ('A' <= line->str[line->p] && line->str[line->p] <= 'Z'))
     {
-        tmp_var[word_i] = s[p];
-        p++;
+        tmp_var[word_i] = line->str[line->p];
+        (line->p)++;
         word_i++;
     }
 
-    if(old_p == p)
+    if(old_p == line->p)
     {
         printf("error\n");
         return NULL;
@@ -176,35 +164,45 @@ struct tree_node *getID()
     return val;
 }
 
-struct tree_node *getN()
+static int is_unar_minus(struct parse_line *line)
+{
+    if(line->p == 0)
+    {
+        (line->p)++;
+        return 1;
+    }
+    char prev = line->str[line->p - 1];
+    char next = line->str[line->p + 1];
+
+    if((prev== '+' || prev == '-' || prev == '*' || prev == '/' || prev == '(') && '0' <= next && next <= '9')
+    {
+        (line->p)++;
+        return 1;
+    }
+
+    return 0;
+}
+
+struct tree_node *getN(struct parse_line *line)
 {
     struct tree_node *val = Node({.type = DIGIT, .val = 0}, NULL, NULL);
-    int old_p = p;
+    int old_p = line->p;
     int dot = 0;
     double mult = 1;
 
     int minus = 1;
-    if(s[p] == '-')
+    if(line->str[line->p] == '-')
     {
-        if(p == 0)
+        if(is_unar_minus(line))
         {
-            p++;
             minus = -1;
-        }
-        if(p > 0)
-        {
-            if((s[p-1] == '+' || s[p-1] == '-' || s[p-1] == '*' || s[p-1] == '/' || s[p-1] == '(') && '0' <= s[p+1] && s[p+1] <= '9')
-            {
-                p++;
-                minus = -1;
-            }
         }
     }
 
-    while(('0' <= s[p] && s[p] <= '9') || s[p] == '.')
+    while(('0' <= line->str[line->p] && line->str[line->p] <= '9') || line->str[line->p] == '.')
     {
 
-        if(s[p] == '.')
+        if(line->str[line->p] == '.')
         {
             if(dot)
             {
@@ -212,28 +210,24 @@ struct tree_node *getN()
                 return NULL;
             }
             dot = 1;
-            p++;
+            (line->p)++;
             continue;
         }
         if(dot)
         {
             mult *= 0.1;
-            val->val.val = val->val.val + mult * (s[p] - '0');
-
-            // val = val + mult * (s[p] - '0');
-
+            val->val.val = val->val.val + mult * (line->str[line->p] - '0');
         }
         else
         {
-            val->val.val = val->val.val * 10 + s[p] - '0';
-            // val = 10*val + s[p] - '0';
+            val->val.val = val->val.val * 10 + line->str[line->p] - '0';
         }
-        p++;
+        (line->p)++;
     }
 
     val->val.val *= minus;
 
-    if(old_p == p)
+    if(old_p == line->p)
     {
         printf("error\n");
         return NULL;
@@ -243,18 +237,16 @@ struct tree_node *getN()
 
 struct tree_node *getG(char *str)
 {
-    s = str;
-    struct tree_node *val = getE();
-    if(s[p] != '\0')
+    struct parse_line line = {.str = str, .p = 0};
+
+    struct tree_node *val = getE(&line);
+
+    if(line.str[line.p] != '\0')
     {
         printf("error\n");
         return NULL;
     }
-    // if((char)(val->val.val) == '\0')
-    // {
-    //     printf("error\n");
-    //     return NULL;
-    // }
+   
     return val;
 }
 
