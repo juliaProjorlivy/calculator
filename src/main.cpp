@@ -95,6 +95,10 @@ int main(int argc, char *argv[])
     char linee[30] = {};
     scanf("%s", linee);
     struct tree_node *parse_node = getG(linee);
+    if(!parse_node)
+    {
+        VERROR("INCORRECT SYNTAX");
+    }
     double res_parse = 0;
     if(do_function(parse_node, vars, &res_parse))
     {

@@ -4,6 +4,7 @@
 #include "ctor_dtor.h"
 #include "parse.h"
 #include "reader.h"
+#include "verror.h"
 #include <string.h>
 
 static int n_op = sizeof(op_names)/(sizeof(char) * max_len);
@@ -20,14 +21,12 @@ static op_t is_op(char *op_val, int word_len)
     return NONE;
 }
 
-// char *s = NULL;
-// int p = 0;
-
 struct tree_node *getE(struct parse_line *line)
 {
     struct tree_node *val = getT(line);
     while(line->str[line->p] == '+' || line->str[line->p] == '-')
     {
+        int old_p = line->p;
         char op = line->str[line->p];
         (line->p)++;
         struct tree_node *val2 = getT(line);
@@ -44,7 +43,7 @@ struct tree_node *getE(struct parse_line *line)
                 break;
             }
             default:
-                printf("error\n");
+                VERROR("syntax error in %d position of the \"%s\"\nexpected \"+\" or \"-\"", old_p, line->str);
                 break;
         }
     }
@@ -69,6 +68,7 @@ struct tree_node *getT(struct parse_line *line)
     struct tree_node *val = getPow(line);
     while(line->str[line->p] == '*' || line->str[line->p] == '/')
     {
+        int old_p = line->p;
         char op = line->str[line->p];
         (line->p)++;
         struct tree_node *val2 = getPow(line);
@@ -85,7 +85,7 @@ struct tree_node *getT(struct parse_line *line)
                 break;
             }
             default:
-                printf("error\n");
+                VERROR("syntax error in %d position of the \"%s\"\nexpected \"*\" or \"/\"", old_p, line->str);
                 break;
         }
     }
@@ -98,9 +98,15 @@ struct tree_node *getP(struct parse_line *line)
     {
         (line->p)++;
         struct tree_node *val = getE(line);
+
+        // if(!val)
+        // {
+        //     return NULL;
+        // }
+
         if(line->str[line->p] != ')')
         {
-            printf("error\n");
+            VERROR("syntax error in %d position of the \"%s\"\nexpected \")\"", line->p, line->str);
             return NULL;
         }
         (line->p)++;
@@ -115,7 +121,7 @@ struct tree_node *getP(struct parse_line *line)
             struct tree_node *val2 = getE(line);
             if(line->str[line->p] != ')')
             {
-                printf("error\n");
+                VERROR("syntax error in %d position of the \"%s\"\nexpected \")\"", line->p, line->str);
                 return NULL;
             }
             (line->p)++;
@@ -146,7 +152,7 @@ struct tree_node *getID(struct parse_line *line)
 
     if(old_p == line->p)
     {
-        printf("error\n");
+        VERROR("syntax error in %d position of the \"%s\"\nexpected ['a'-'z''A'-'Z']", line->p, line->str);
         return NULL;
     }
     op_t operation = is_op(tmp_var, word_i);
@@ -206,7 +212,7 @@ struct tree_node *getN(struct parse_line *line)
         {
             if(dot)
             {
-                printf("error");
+                VERROR("syntax error in %d position of the \"%s\"\nexpected a digit", line->p, line->str);
                 return NULL;
             }
             dot = 1;
@@ -229,7 +235,7 @@ struct tree_node *getN(struct parse_line *line)
 
     if(old_p == line->p)
     {
-        printf("error\n");
+        VERROR("syntax error in %d position of the \"%s\"\nexpected digit", line->p, line->str);
         return NULL;
     }
     return val;
@@ -243,7 +249,7 @@ struct tree_node *getG(char *str)
 
     if(line.str[line.p] != '\0')
     {
-        printf("error\n");
+        VERROR("syntax error in %d position of the \"%s\"\nexpected '\\0'", line.p, line.str);
         return NULL;
     }
    
