@@ -5,7 +5,8 @@
 #include "derivative.h"
 #include "verror.h"
 
-void print_in_node(struct tree_node *node, char **line, char **const_line)
+//print tree in line 
+void print_in_node(struct tree_node *node, char **line)
 {
     int word_len = 0;
     if(!node)
@@ -14,7 +15,7 @@ void print_in_node(struct tree_node *node, char **line, char **const_line)
     }
     sprintf(*line, "(%n", &word_len);
     (*line) += word_len;
-    print_in_node(node->left, line, const_line);
+    print_in_node(node->left, line);
     if(node->val.type == OP)
     {
         sprintf(*line, "%s%n", op_names[node->val.op], &word_len);
@@ -28,7 +29,7 @@ void print_in_node(struct tree_node *node, char **line, char **const_line)
         sprintf(*line, "%s%n", node->val.var, &word_len);
     }
     (*line) += word_len;
-    print_in_node(node->right, line, const_line);
+    print_in_node(node->right, line);
     sprintf(*line, ")%n", &word_len);
     (*line) += word_len;
 }
@@ -145,25 +146,35 @@ int latex_dump_node(struct tree_node *node, FILE *file)
             latex_dump_node(node->right, file);
             fprintf(file, "\\right)");
         }
-        else if(strlen(op_names[node->val.op]) > 1)
-        {
-            fprintf(file, "{(");
-            latex_dump_node(node->left, file);
-            fprintf(file, ")}");
-            fprintf(file, "\\%s", op_names[node->val.op]);
-            fprintf(file, "{(");
-            latex_dump_node(node->right, file);
-            fprintf(file, ")}");
-        }
         else
         {
-            fprintf(file, "{(");
-            latex_dump_node(node->left, file);
-            fprintf(file, ")}");
+            if(node->left)
+            {
+                if(node->left->left || node->left->right)
+                {
+                    fprintf(file, "\\left(");
+                    latex_dump_node(node->left, file);
+                    fprintf(file, "\\right )");
+                }
+            }
+            else
+            {
+                latex_dump_node(node->left, file);
+            }
             fprintf(file, "%s", op_names[node->val.op]);
-            fprintf(file, "{(");
-            latex_dump_node(node->right, file);
-            fprintf(file, ")}");
+            if(node->right)
+            {
+                if(node->right->right || node->right->left)
+                {
+                    fprintf(file, "\\left(");
+                    latex_dump_node(node->right, file);
+                    fprintf(file, "\\right )");
+                }
+            }
+            else
+            {
+                latex_dump_node(node->right, file);
+            }
         }
     }
     else if(node->val.type == DIGIT)
@@ -188,8 +199,7 @@ int latex_dump_tree(struct tree_node *node, const char *filename)
     }
     fprintf(file, "\\begin{document}\n$");
     latex_dump_node(node, file);
-    fprintf(file, "$\n");
-    fprintf(file, "\\end{document}\n");
+    fprintf(file, "$\n\\end{document}\n");
     if(fclose(file))
     {
         VERROR_FCLOSE(filename);

@@ -24,25 +24,56 @@ static op_t is_op(char *op_val, int word_len)
 struct tree_node *getE(struct parse_line *line)
 {
     struct tree_node *val = getT(line);
+
+    if(!val)
+    {
+        return NULL;
+    }
+
     while(line->str[line->p] == '+' || line->str[line->p] == '-')
     {
         int old_p = line->p;
         char op = line->str[line->p];
         (line->p)++;
         struct tree_node *val2 = getT(line);
+
+        if(!val2)
+        {
+            Del_tree(val);
+            return NULL;
+        }
+
         switch (op)
         {
             case '+':
             {
-                val = Node({.type = OP, .op = ADD}, val, val2);
+                struct tree_node *tmp_val = Node({.type = OP, .op = ADD}, val, val2);
+                if(!tmp_val)
+                {
+                    Del_tree(val);
+                    Del_tree(val2);
+                    VERROR_MEM;
+                    return NULL;
+                }
+                val = tmp_val;
                 break;
             }
             case '-':
             {
-                val = Node({.type = OP, .op = SUB}, val, val2);
+                struct tree_node *tmp_val = Node({.type = OP, .op = SUB}, val, val2);
+                if(!tmp_val)
+                {
+                    Del_tree(val);
+                    Del_tree(val2);
+                    VERROR_MEM;
+                    return NULL;
+                }
+                val = tmp_val;
                 break;
             }
             default:
+                Del_tree(val);
+                Del_tree(val2);
                 VERROR("syntax error in %d position of the \"%s\"\nexpected \"+\" or \"-\"", old_p, line->str);
                 break;
         }
@@ -54,11 +85,32 @@ struct tree_node *getE(struct parse_line *line)
 struct tree_node *getPow(struct parse_line *line)
 {
     struct tree_node *val = getP(line);
+
+    if(!val)
+    {
+        return NULL;
+    }
+
     while(line->str[line->p] == '^')
     {
         (line->p)++;
         struct tree_node *val2 = getP(line);
-        val = Node({.type = OP, .op = POW}, val, val2);
+
+        if(!val2)
+        {
+            Del_tree(val);
+            return NULL;
+        }
+
+        struct tree_node *tmp_val = Node({.type = OP, .op = POW}, val, val2);
+        if(!tmp_val)
+        {
+            Del_tree(val);
+            Del_tree(val2);
+            VERROR_MEM;
+            return NULL;
+        }
+        val = tmp_val;
     }
     return val;
 }
@@ -66,27 +118,60 @@ struct tree_node *getPow(struct parse_line *line)
 struct tree_node *getT(struct parse_line *line)
 {
     struct tree_node *val = getPow(line);
+
+    if(!val)
+    {
+        return NULL;
+    }
+
     while(line->str[line->p] == '*' || line->str[line->p] == '/')
     {
         int old_p = line->p;
         char op = line->str[line->p];
         (line->p)++;
         struct tree_node *val2 = getPow(line);
+
+        if(!val2)
+        {
+            Del_tree(val);
+            return NULL;
+        }
+
         switch (op)
         {
             case '*':
             {
-                val = Node({.type = OP, .op = MUL}, val, val2);
+                struct tree_node *tmp_val = Node({.type = OP, .op = MUL}, val, val2);
+                if(!tmp_val)
+                {
+                    VERROR_MEM;
+                    Del_tree(val);
+                    Del_tree(val2);
+                    return NULL;
+                }
+                val = tmp_val;
                 break;
             }
             case '/':
             {
-                val = Node({.type = OP, .op = DIV}, val, val2);
+                struct tree_node *tmp_val = Node({.type = OP, .op = DIV}, val, val2);
+                if(!tmp_val)
+                {
+                    VERROR_MEM;
+                    Del_tree(val);
+                    Del_tree(val2);
+                    return NULL;
+                }
+                val = tmp_val;
                 break;
             }
             default:
+            {
                 VERROR("syntax error in %d position of the \"%s\"\nexpected \"*\" or \"/\"", old_p, line->str);
-                break;
+                Del_tree(val);
+                Del_tree(val2);
+                return NULL;
+            }
         }
     }
     return val;
@@ -99,14 +184,15 @@ struct tree_node *getP(struct parse_line *line)
         (line->p)++;
         struct tree_node *val = getE(line);
 
-        // if(!val)
-        // {
-        //     return NULL;
-        // }
+        if(!val)
+        {
+            return NULL;
+        }
 
         if(line->str[line->p] != ')')
         {
             VERROR("syntax error in %d position of the \"%s\"\nexpected \")\"", line->p, line->str);
+            Del_tree(val);
             return NULL;
         }
         (line->p)++;
@@ -115,13 +201,28 @@ struct tree_node *getP(struct parse_line *line)
     else if('a' <= line->str[line->p] && line->str[line->p] <= 'z')
     {
         struct tree_node *val = getID(line);
+
+        if(!val)
+        {
+            return NULL;
+        }
+
         if(line->str[line->p] == '(')
         {
             (line->p)++;
             struct tree_node *val2 = getE(line);
+
+            if(!val2)
+            {
+                Del_tree(val);
+                return NULL;
+            }
+
             if(line->str[line->p] != ')')
             {
                 VERROR("syntax error in %d position of the \"%s\"\nexpected \")\"", line->p, line->str);
+                Del_tree(val);
+                Del_tree(val2);
                 return NULL;
             }
             (line->p)++;
@@ -139,6 +240,13 @@ struct tree_node *getP(struct parse_line *line)
 struct tree_node *getID(struct parse_line *line)
 {
     struct tree_node *val = Node({.type = NOTHING, .val = 0 }, NULL, NULL);
+
+    if(!val)
+    {
+        VERROR_MEM;
+        return NULL;
+    }
+
     int old_p = line->p;
     int word_i = 0;
     char tmp_var[max_len] = {};
@@ -153,13 +261,22 @@ struct tree_node *getID(struct parse_line *line)
     if(old_p == line->p)
     {
         VERROR("syntax error in %d position of the \"%s\"\nexpected ['a'-'z''A'-'Z']", line->p, line->str);
+        Del_tree(val);
         return NULL;
     }
     op_t operation = is_op(tmp_var, word_i);
 
     if(operation == NONE)
     {
-        val->val.var = strndup(tmp_var, word_i);
+        val->val.var = strndup(tmp_var, (size_t)word_i);
+
+        if(!val->val.var)
+        {
+            VERROR_MEM;
+            Del_tree(val);
+            return NULL;
+        }
+
         val->val.type = VAR;
     }
     else
@@ -192,6 +309,13 @@ static int is_unar_minus(struct parse_line *line)
 struct tree_node *getN(struct parse_line *line)
 {
     struct tree_node *val = Node({.type = DIGIT, .val = 0}, NULL, NULL);
+
+    if(!val)
+    {
+        VERROR_MEM;
+        return NULL;
+    }
+
     int old_p = line->p;
     int dot = 0;
     double mult = 1;
@@ -213,6 +337,7 @@ struct tree_node *getN(struct parse_line *line)
             if(dot)
             {
                 VERROR("syntax error in %d position of the \"%s\"\nexpected a digit", line->p, line->str);
+                Del_tree(val);
                 return NULL;
             }
             dot = 1;
@@ -236,6 +361,7 @@ struct tree_node *getN(struct parse_line *line)
     if(old_p == line->p)
     {
         VERROR("syntax error in %d position of the \"%s\"\nexpected digit", line->p, line->str);
+        Del_tree(val);
         return NULL;
     }
     return val;
@@ -250,6 +376,7 @@ struct tree_node *getG(char *str)
     if(line.str[line.p] != '\0')
     {
         VERROR("syntax error in %d position of the \"%s\"\nexpected '\\0'", line.p, line.str);
+        Del_tree(val);
         return NULL;
     }
    

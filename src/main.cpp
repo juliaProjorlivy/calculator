@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdarg.h>
 #include "tree.h"
 #include "variables.h"
 #include "ctor_dtor.h"
@@ -8,26 +10,234 @@
 #include "simplifier.h"
 #include "verror.h"
 #include "taylor_func.h"
+#include "parse.h"
+#include "io.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include "parse.h"
+char *get_line_from_file(const char *filename);
 
+char *get_line_from_file(const char *filename)
+{
+    FILE *file = fopen(filename, "r+");
+    struct stat buf;
+    if(stat(filename, &buf))
+    {
+        VERROR("could not stat");
+        return NULL;
+    }
+    size_t data_size = (size_t)buf.st_size + 1;
+    char *line = (char *)calloc(sizeof(char), data_size);
+    if(line == NULL)
+    {
+        VERROR_MEM;
+        return NULL;
+    }
+
+    if(fread(line, (size_t)buf.st_size, 1, file) < 1)
+    {
+        VERROR_FWRITE(filename);
+        return NULL;
+    } 
+    if(fclose(file))
+    {
+        VERROR_FCLOSE(filename);
+        return NULL;
+    }
+
+    return line;
+}
+
+// #define SECOND
+
+const int max_data_size = 500;
+
+#ifndef SECOND
 int main(int argc, char *argv[])
 {
-    // if(argc < 2)
-    // {
-    //     VERROR("not enough arguments are given");
-    //     return 1;
-    // }
-    // const char *data_filename = argv[1];
+    switch(argc - 1)
+    {
+        case 0:
+            VERROR("too little arguments are given");
+            return 1;
+        case 1:
+        {
+            char *line = (char *)calloc(sizeof(char), max_data_size);
+            if(!line)
+            {
+                VERROR_MEM;
+                return 1;
+            }
+            if(scanf("%s", line) <= 0)
+            {
+                VERROR("troubles reading the line");
+                free(line);
+                return 1;
+            }
+            struct tree_node *node = getG(line);
+            if(!node)
+            {
+                free(line);
+                return 1;
+            }
+            if(!strcmp(argv[1], "-plt"))
+            {
+                VERROR("need output file name passed as a second parametr");
+                free(line);
+                Del_tree(node);
+                return 1;
+            }
+            if(process_request(argv[1], node, 0))
+            {
+                free(line);
+                Del_tree(node);
+                return 1;
+            }
+            free(line);
+            Del_tree(node);
+            return 0;
+        }
+        case 2:
+        {
+            if(!strcmp(argv[1], "-plt") )
+            {
+                char *line = (char *)calloc(sizeof(char), max_data_size);
+                if(!line)
+                {
+                    VERROR_MEM;
+                    return 1;
+                }
+                if(scanf("%s", line) <= 0)
+                {
+                    VERROR("can't read the data");
+                    free(line);
+                    return 1;
+                }
+                struct tree_node *node = getG(line);
+                if(!node)
+                {
+                    free(line);
+                    return 1;
+                }
+                if(process_request(argv[1], node, 2, argv[2], line))
+                {
+                    free(line);
+                    Del_tree(node);
+                    return 1;
+                }
+                free(line);
+                Del_tree(node);
+                return 0;
+            }
+            else 
+            {
+                char *request = (argv[1][0] == '-') ? argv[1] : argv[2];
+                char *data_filename = (argv[1][0] != '-') ? argv[1] : argv[2];
+                char *line = get_line_from_file(data_filename);
+                if(!line)
+                {
+                    return 1;
+                }
+                struct tree_node *node = getG(line);
+                if(!node)
+                {
+                    free(line);
+                    return 1;
+                }
+                if(process_request(request, node, 0))
+                {
+                    free(line);
+                    Del_tree(node);
+                    return 1;
+                }
+                free(line);
+                Del_tree(node);
+                return 0;
+            }
+        }
+        case 3:
+        {
+            int plot_first = (!strcmp(argv[1], "-plt")) ? 1 : 0;
+            char *outfname = plot_first ? argv[2] : argv[3];
+            char *request = plot_first ? argv[3] : argv[1];
+            char *line = (char *)calloc(sizeof(char), max_data_size);
+            if(!line)
+            {
+                VERROR_MEM;
+                return 1;
+            }
+            if(scanf("%s", line) <= 0)
+            {
+                VERROR("troubles reading the line");
+                return 1;
+            }
+            struct tree_node *node = getG(line);
+            if(!node)
+            {
+                free(line);
+                return 1;
+            }
+            if(process_request(request, node, 2, outfname, line))
+            {
+                free(line);
+                Del_tree(node);
+                return 1;
+            }
 
-    // #ifdef calculate_func
-    //     const char
-    //     #ifdef print_tree
-    //         const char *tree_file = argv[]
-    //     #endif
-    // #endif
+            Del_tree(node);
+            free(line);
+            return 0;
+        }
+        case 4:
+        {
+            int plot_first = (!strcmp(argv[1], "-plt")) ? 1 : 0;
+            int plot_second = (!strcmp(argv[2], "-plt")) ? 1 : 0;
+            int data_fname_first = (argv[1][0] != '-') ? 1 : 0;
+            int data_fname_second = (argv[2][0] != '-' && !plot_first) ? 1 : 0;
+            int data_fname_third = (argv[3][0] != '-' && !plot_second) ? 1 : 0;
+
+            char *data_fname = (data_fname_first) ? argv[1] : ((data_fname_second) ? argv[2] : ((data_fname_third) ? argv[3] : argv[4]));
+
+            char *outfname = (plot_first) ? argv[2] : ((plot_second) ? argv[3] : argv[4]);
+
+            char *request = (plot_first && data_fname_third) ? argv[4] : ((plot_first) ? argv[3] : ((plot_second && data_fname_first) ? argv[2] : argv[1]));
+
+            char *line = get_line_from_file(data_fname);
+            if(!line)
+            {
+                VERROR_MEM;
+                return 1;
+            }
+            struct tree_node *node = getG(line);
+            if(!node)
+            {
+                free(line);
+                return 1;
+            }
+            if(process_request(request, node, 2, outfname, line))
+            {
+                free(line);
+                Del_tree(node);
+                return 1;
+            }
+            free(line);
+            Del_tree(node);
+            return 0;
+        }
+        default:
+            VERROR("unexpected number of arguments");
+            return 1;
+    }
+
+    return 0;
+}
+#endif
+
+#ifdef SECOND
+int main(int argc, char *argv[])
+{
+
+
     const char *data_filename = "data.txt";
     const char *dot_filename = "graph/graph.dot";
     const char *taylor_filename = "taylor.tex";
@@ -103,12 +313,10 @@ int main(int argc, char *argv[])
     if(do_function(parse_node, vars, &res_parse))
     {
         printf("do func bad\n");
-        return 1;
     }
     if(!parse_node)
     {
         printf("some troubles\n");
-        return 1;
     }
     printf("%lf\n", res_parse);
     Del_tree(parse_node);
@@ -125,4 +333,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
+#endif

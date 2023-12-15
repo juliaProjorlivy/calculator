@@ -10,14 +10,14 @@
 #include "verror.h"
 #include <math.h>
 
-static unsigned int factorial(int n)
+static int factorial(int n)
 {
     if(n == 1)
     {
         return 1;
     }
-    unsigned int val = factorial(n - 1);
-    return n * val;
+    int val = factorial(n - 1);
+    return val * n;
 }
 
 struct tree_node *Taylor_term(struct tree_node *node, struct variables *vars, int cur_degree, int degree)

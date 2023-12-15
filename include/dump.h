@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-void print_in_node(struct tree_node *node, char **line, char **const_line);
+void print_in_node(struct tree_node *node, char **line);
 
 void node_dump(struct tree_node *node, FILE *file);
 

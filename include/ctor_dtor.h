@@ -5,4 +5,6 @@ struct tree_node *Node(struct node_val val, struct tree_node *left, struct tree_
 
 void Del_tree(struct tree_node *node);
 
+int node_size(struct tree_node *node);
+
 #endif

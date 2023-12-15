@@ -46,4 +46,32 @@ void Del_tree(struct tree_node *node)
   free(node);
 }
 
+const int double_size = 12;
+const int operation_size = 3;
+
+int node_size(struct tree_node *node)
+{
+    if(!node)
+    {
+        return 0;
+    }
+
+    int lsize = node_size(node->left);
+    int rsize = node_size(node->right);
+    int size = lsize + rsize;
+    if(node->val.type == DIGIT)
+    {
+        size += double_size;
+    }
+    else if(node->val.type == OP)
+    {
+        size += operation_size;
+    }
+    else
+    {
+        size += strlen(node->val.var);
+    }
+    return size;
+}
+
 

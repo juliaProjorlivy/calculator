@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdarg.h>
 
-//                        number of elements in arr of structs multiplied by 2
+                    //    number of elements in arr of structs multiplied by 2
 struct variables *Variables(int count, ...)
 {
     struct variables *vars = (struct variables *)calloc(sizeof(variables), 1);
@@ -40,7 +40,6 @@ void Del_Variables(struct variables *vars)
         free((vars->var_arr)[i].name);
     }
     free(vars->var_arr);
-    free(vars);
 }
 
 double *find_value_of_variable(char *var, struct variables *vars)
