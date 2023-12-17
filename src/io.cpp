@@ -11,8 +11,7 @@
 #include "ctor_dtor.h"
 #include "taylor_func.h"
 #include "verror.h"
-
-
+#include "reader.h"
 
 struct variables *vars_process()
 {
@@ -44,22 +43,55 @@ struct variables *vars_process()
     for(int i_var = 0; i_var < n_vars; i_var++)
     {
         scanf("%*[\n ]%[a-zA-Z]%n", var, &word_len);
-
-        char *name = (char *)calloc(sizeof(char), word_len + 1);
-        if(!name)
-        {
-            VERROR_MEM;
-            Del_Variables(vars);
-            return NULL;
-        }
-
-        vars->var_arr[i_var].name = name;
+        
+        vars->var_arr[i_var].name = strdup(var);
         scanf("%*[^0-9.]%lf", &(vars->var_arr[i_var].val));
         vars->count++;
     }
     
     return vars;
 }
+
+
+void to_gnuplot_format(struct tree_node *node, char **line)
+{
+    int word_len = 0;
+    if(!node)
+    {
+        return;
+    }
+    sprintf(*line, "(%n", &word_len);
+    (*line) += word_len;
+    to_gnuplot_format(node->left, line);
+    if(node->val.type == OP)
+    {
+        if(node->val.op == POW)
+        {
+            sprintf(*line, "**%n", &word_len);
+        }
+        else if(node->val.op == LN)
+        {
+            sprintf(*line, "log%n", &word_len);
+        }
+        else
+        {
+            sprintf(*line, "%s%n", op_names[node->val.op], &word_len);
+        }
+    }
+    else if(node->val.type == DIGIT)
+    {
+        sprintf(*line, "%lf%n", node->val.val, &word_len);
+    }
+    else 
+    {
+        sprintf(*line, "%s%n", node->val.var, &word_len);
+    }
+    (*line) += word_len;
+    to_gnuplot_format(node->right, line);
+    sprintf(*line, ")%n", &word_len);
+    (*line) += word_len;
+}
+
 
 int plot(char *outfname, int n_graphs, ...)
 {
@@ -78,12 +110,22 @@ int plot(char *outfname, int n_graphs, ...)
 
     va_list lines;
     va_start(lines, n_graphs);
-    
+    fprintf(file, "plot ");
     for(int i_line = 0; i_line < n_graphs; i_line++)
     {
-        char *str = va_arg(lines, char *);
-        if(fprintf(file, "plot %s\n", str) <= 0)
+        struct tree_node *node = va_arg(lines, struct tree_node *);
+        // char *str = va_arg(lines, char *);
+        char *gnuplot_format_str = (char *)calloc(sizeof(char), node_size(node));
+        if(!gnuplot_format_str)
         {
+            VERROR_MEM;
+            return 1;
+        }
+        char *gnuplot_format_str_ptr = gnuplot_format_str;
+        to_gnuplot_format(node, &gnuplot_format_str);
+        if(fprintf(file, "%s,", gnuplot_format_str_ptr) <= 0)
+        {
+            free(gnuplot_format_str_ptr);
             VERROR("can't write the program");
             if(pclose(file) == -1)
             {
@@ -91,8 +133,9 @@ int plot(char *outfname, int n_graphs, ...)
             }
             return 1;
         }
+        free(gnuplot_format_str_ptr);
     }
-
+    fprintf(file, "\n");
     va_end(lines);
 
     if(pclose(file) == -1)
@@ -122,12 +165,11 @@ int fval(struct tree_node *node, int n_lines, va_list lines)
     if(n_lines)
     {
         char *outfname = va_arg(lines, char *); // output file name
-        char *line = va_arg(lines, char *);
-        plot(outfname, 1, line);
+        plot(outfname, 1, node);
     }
     
     Del_Variables(vars);
-    printf("answer = %lf", res);
+    printf("answer = %lf\n", res);
     return 0;
 }
 
@@ -150,37 +192,24 @@ int fder(struct tree_node *node, int n_lines, va_list lines)
         return 1;
     }
 
-    struct variables *vars = vars_process();
-    if(!vars)
-    {
-        return 1;
-    }
-
     struct tree_node *der = d(node, var);
     der = simplify(der);
     if(!der)
     {
-        Del_Variables(vars);
         return 1;
     }
-    
-    if(latex_dump_tree(node, fname))
+    if(latex_dump_tree(der, fname))
     {
         Del_tree(der);
-        Del_Variables(vars);
         return 1;
     }
     
     if(n_lines)
     {
         char *outfname = va_arg(lines, char *);
-        char *line = va_arg(lines, char *);
-        char *der_line = (char *)calloc(sizeof(char), node_size(der));
-        print_in_node(der, &der_line);
-        plot(outfname, 2, line, der_line);
+        plot(outfname, 2, node, der);
     }
 
-    Del_Variables(vars);
     Del_tree(der);
     return 0;
 }
@@ -198,19 +227,19 @@ int ftay(struct tree_node *node, int n_lines, va_list lines)
         VERROR("troubles reading the degree");
         return 1;
     }
-    printf("\nx0: ");
+    printf("x0: ");
     if(scanf("%lf", &x0) <= 0)
     {
         VERROR("troubles reading x0");
         return 1;
     }
-    printf("\nvar: ");
+    printf("var: ");
     if(scanf("%s", var) <= 0)
     {
         VERROR("troubles reading the variable");
         return 1;
     }
-    printf("\nfname: ");
+    printf("fname: ");
     if(scanf("%s", fname) <= 0)
     {
         VERROR("troubles reading the filename");
@@ -218,7 +247,7 @@ int ftay(struct tree_node *node, int n_lines, va_list lines)
     }
     printf("\n");
     struct variable whole_var = {.name = var, .val = x0};
-    struct tree_node *tay = Taylor_expansion(node, &whole_var, degree);
+    struct tree_node *tay = simplify(Taylor_expansion(node, &whole_var, degree));
     if(!tay)
     {
         VERROR("can't calculate taylor expansion");
@@ -235,10 +264,7 @@ int ftay(struct tree_node *node, int n_lines, va_list lines)
     if(n_lines)
     {
         char *outfname = va_arg(lines, char *);
-        char *line_func = va_arg(lines, char *);
-        char *line_tay = (char *)calloc(sizeof(char), node_size(tay));
-        print_in_node(tay, &line_tay);
-        plot(outfname, 2, line_func, line_tay);
+        plot(outfname, 2, node, tay);
     }
     
     Del_tree(tay);

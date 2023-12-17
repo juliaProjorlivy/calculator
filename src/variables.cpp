@@ -40,6 +40,7 @@ void Del_Variables(struct variables *vars)
         free((vars->var_arr)[i].name);
     }
     free(vars->var_arr);
+    free(vars);
 }
 
 double *find_value_of_variable(char *var, struct variables *vars)

@@ -3,6 +3,7 @@
 #include "reader.h"
 #include "dump.h"
 #include "derivative.h"
+#include "simplifier.h"
 #include "verror.h"
 
 //print tree in line 
@@ -152,34 +153,34 @@ int latex_dump_node(struct tree_node *node, FILE *file)
             {
                 if(node->left->left || node->left->right)
                 {
-                    fprintf(file, "\\left(");
+                    fprintf(file, "\\left (");
                     latex_dump_node(node->left, file);
                     fprintf(file, "\\right )");
                 }
-            }
-            else
-            {
-                latex_dump_node(node->left, file);
+                else
+                {
+                    latex_dump_node(node->left, file);
+                }
             }
             fprintf(file, "%s", op_names[node->val.op]);
             if(node->right)
             {
                 if(node->right->right || node->right->left)
                 {
-                    fprintf(file, "\\left(");
+                    fprintf(file, "\\left (");
                     latex_dump_node(node->right, file);
                     fprintf(file, "\\right )");
                 }
-            }
-            else
-            {
-                latex_dump_node(node->right, file);
+                else
+                {
+                    latex_dump_node(node->right, file);
+                }
             }
         }
     }
     else if(node->val.type == DIGIT)
     {
-        fprintf(file, " %.2lf ", node->val.val);
+        fprintf(file, " {%.2g} ", node->val.val);
     }
     else
     {

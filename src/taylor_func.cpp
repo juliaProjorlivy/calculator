@@ -25,7 +25,7 @@ struct tree_node *Taylor_term(struct tree_node *node, struct variables *vars, in
     if(cur_degree > degree)
     {
         Del_tree(node);
-        return NULL;
+        return Node({.type = DIGIT, .val = 0}, NULL, NULL);
     }
 
     struct tree_node *node_d = simplify(d(node, vars->var_arr->name));

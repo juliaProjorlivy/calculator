@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/julia/calculator/calculate",
-            "args": [],
+            "args": ["-fder", "-plt", "geek.png"],
             "stopAtEntry": false,
             "cwd": "/home/julia/calculator",
             "environment": [],

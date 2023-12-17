@@ -46,8 +46,8 @@ void Del_tree(struct tree_node *node)
   free(node);
 }
 
-const int double_size = 12;
-const int operation_size = 3;
+const int double_size = 34;
+const int operation_size = 7;
 
 int node_size(struct tree_node *node)
 {
@@ -69,7 +69,7 @@ int node_size(struct tree_node *node)
     }
     else
     {
-        size += strlen(node->val.var);
+        size += strlen(node->val.var) + 2;
     }
     return size;
 }
