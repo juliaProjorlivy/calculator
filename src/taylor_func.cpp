@@ -22,7 +22,7 @@ static int factorial(int n)
 
 struct tree_node *Taylor_term(struct tree_node *node, struct variables *vars, int cur_degree, int degree)
 {
-    if(cur_degree > degree)
+    if(cur_degree > degree + 1)
     {
         Del_tree(node);
         return Node({.type = DIGIT, .val = 0}, NULL, NULL);

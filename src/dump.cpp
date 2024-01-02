@@ -4,6 +4,7 @@
 #include "dump.h"
 #include "derivative.h"
 #include "simplifier.h"
+#include "ctor_dtor.h"
 #include "verror.h"
 
 //print tree in line 
@@ -125,70 +126,116 @@ int tree_dump(struct tree_node *node, const char *filename)
 }
 
 
-int latex_dump_node(struct tree_node *node, FILE *file)
+const int max_symb_in_line = 500;
+
+int latex_dump_node(struct tree_node *node, FILE *file, char *next_change)
 {
     if(!node)
     {
         return 0;
     }
-    if(node->val.type == OP)
+    if(node_size(node) >= max_symb_in_line)
     {
-        if(node->val.op == DIV)
+        if(node->val.type == OP)
         {
-            fprintf(file, "\\frac{");
-            latex_dump_node(node->left, file);
-            fprintf(file, "}{");
-            latex_dump_node(node->right, file);
-            fprintf(file, "}");
-        }
-        else if(is_un(node->val.op))
-        {
-            fprintf(file, "\\%s\\left(", op_names[node->val.op]);
-            latex_dump_node(node->right, file);
-            fprintf(file, "\\right)");
-        }
-        else
-        {
-            if(node->left)
+            if(node->val.op == DIV)
             {
-                if(node->left->left || node->left->right)
-                {
-                    fprintf(file, "\\left (");
-                    latex_dump_node(node->left, file);
-                    fprintf(file, "\\right )");
-                }
-                else
-                {
-                    latex_dump_node(node->left, file);
-                }
+                char first_change = (*next_change)++;
+                char second_change = (*next_change)++;
+                fprintf(file, "\\frac{%c}{%c}$$\n", first_change, second_change);
+                fprintf(file, "\\text{where:}\n$$%c = ", first_change);
+                latex_dump_node(node->left, file, next_change);
+                fprintf(file, "$$\n$$%c = ", second_change);
+                latex_dump_node(node->left, file, next_change);
+                fprintf(file, "\n");
             }
-            fprintf(file, "%s", op_names[node->val.op]);
-            if(node->right)
+        
+            else if(is_un(node->val.op))
             {
-                if(node->right->right || node->right->left)
-                {
-                    fprintf(file, "\\left (");
-                    latex_dump_node(node->right, file);
-                    fprintf(file, "\\right )");
-                }
-                else
-                {
-                    latex_dump_node(node->right, file);
-                }
+                fprintf(file, "%s \\left (%c\\right )$$\n", op_names[node->val.op], *next_change);
+                fprintf(file, "\\text{where:}\n$$%c = ", (*next_change)++);
+                latex_dump_node(node->right, file, next_change);
+                fprintf(file, "\n");
+            }
+            else
+            {
+                char first_change = (*next_change)++;
+                char second_change = (*next_change)++;
+                fprintf(file, "%c%s%c$$\n", first_change, op_names[node->val.op], second_change);
+                fprintf(file, "\\text{where:}\n$$%c = ", first_change);
+                latex_dump_node(node->left, file, next_change);
+                fprintf(file, "$$\n$$%c = ", second_change);
+                latex_dump_node(node->right, file, next_change);
+                fprintf(file, "\n");
             }
         }
-    }
-    else if(node->val.type == DIGIT)
-    {
-        fprintf(file, " {%.2g} ", node->val.val);
     }
     else
     {
-        fprintf(file, " %s ", node->val.var);
+        if(node->val.type == OP)
+        {
+            if(node->val.op == DIV)
+            {
+                
+                fprintf(file, "\\frac{");
+                latex_dump_node(node->left, file, next_change);
+                fprintf(file, "}{");
+                latex_dump_node(node->right, file, next_change);
+                fprintf(file, "}");
+                
+            }
+            else if(is_un(node->val.op))
+            {
+                fprintf(file, "\\%s\\left (", op_names[node->val.op]);
+                latex_dump_node(node->right, file, next_change);
+                fprintf(file, "\\right )");
+            }
+            else
+            {
+                if(node->left)
+                {
+                    if(node->left->left || node->left->right)
+                    {
+                        fprintf(file, "\\left (");
+                        latex_dump_node(node->left, file, next_change);
+                        fprintf(file, "\\right )");
+                    }
+                    else
+                    {
+                        latex_dump_node(node->left, file, next_change);
+                    }
+                }
+                fprintf(file, "%s", op_names[node->val.op]);
+                if(node->right)
+                {
+                    
+                    if(node->right->right || node->right->left)
+                    {
+                        fprintf(file, "\\left (");
+                        latex_dump_node(node->right, file, next_change);
+                        fprintf(file, "\\right )");
+                    }
+                    else
+                    {
+                        latex_dump_node(node->right, file, next_change);
+                    }
+                }
+            }
+        }
+        else if(node->val.type == DIGIT)
+        {
+            fprintf(file, " {%.2g} ", node->val.val);
+        }
+        else
+        {
+            fprintf(file, " %s ", node->val.var);
+        }
     }
     
     return 0;
 }
+
+
 
 int latex_dump_tree(struct tree_node *node, const char *filename)
 {
@@ -198,9 +245,10 @@ int latex_dump_tree(struct tree_node *node, const char *filename)
         VERROR_FOPEN(filename);
         return 1;
     }
-    fprintf(file, "\\begin{document}\n$");
-    latex_dump_node(node, file);
-    fprintf(file, "$\n\\end{document}\n");
+    char next_change = 65;
+    fprintf(file, "\\begin{document}\n$$");
+    latex_dump_node(node, file, &next_change);
+    fprintf(file, "$$\n\\end{document}\n");
     if(fclose(file))
     {
         VERROR_FCLOSE(filename);

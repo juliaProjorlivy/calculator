@@ -19,6 +19,8 @@ int process_request(char *request, struct tree_node *node, int n_lines, ...);
 
 int plot(char *outfname, int n_graphs, ...);
 
+void to_gnuplot_format(struct tree_node *node, char **line);
+
 
 #endif
 

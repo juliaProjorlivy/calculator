@@ -45,7 +45,7 @@ struct variables *vars_process()
         scanf("%*[\n ]%[a-zA-Z]%n", var, &word_len);
         
         vars->var_arr[i_var].name = strdup(var);
-        scanf("%*[^0-9.]%lf", &(vars->var_arr[i_var].val));
+        scanf("%*[^-0-9.]%lf", &(vars->var_arr[i_var].val));
         vars->count++;
     }
     
@@ -84,7 +84,7 @@ void to_gnuplot_format(struct tree_node *node, char **line)
     }
     else 
     {
-        sprintf(*line, "%s%n", node->val.var, &word_len);
+        sprintf(*line, "x%n", &word_len);
     }
     (*line) += word_len;
     to_gnuplot_format(node->right, line);
@@ -110,19 +110,22 @@ int plot(char *outfname, int n_graphs, ...)
 
     va_list lines;
     va_start(lines, n_graphs);
+    fprintf(file, "set ylabel \"y\"\nset xlabel \"x\"\n");
     fprintf(file, "plot ");
     for(int i_line = 0; i_line < n_graphs; i_line++)
     {
         struct tree_node *node = va_arg(lines, struct tree_node *);
-        // char *str = va_arg(lines, char *);
+
         char *gnuplot_format_str = (char *)calloc(sizeof(char), node_size(node));
         if(!gnuplot_format_str)
         {
             VERROR_MEM;
             return 1;
         }
+        char var[max_len] = {};
         char *gnuplot_format_str_ptr = gnuplot_format_str;
         to_gnuplot_format(node, &gnuplot_format_str);
+
         if(fprintf(file, "%s,", gnuplot_format_str_ptr) <= 0)
         {
             free(gnuplot_format_str_ptr);

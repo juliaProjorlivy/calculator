@@ -9,7 +9,7 @@ void node_dump(struct tree_node *node, FILE *file);
 
 int tree_dump(struct tree_node *node, const char *filename);
 
-int latex_dump_node(struct tree_node *node, FILE *file);
+int latex_dump_node(struct tree_node *node, FILE *file, char *next_change);
 
 int latex_dump_tree(struct tree_node *node, const char *filename);
 
